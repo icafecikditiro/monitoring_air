@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'auth_wrapper.dart';
 import 'firebase_options.dart'; // Impor file yang digenerate oleh FlutterFire
+import 'splash_screen.dart';
 
 // Ubah fungsi main menjadi async
 void main() async {
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Google Login',
       // ...
-      home: AuthWrapper(), // Ganti LoginPage() dengan AuthWrapper()
+      home: SplashScreen(), // Ganti LoginPage() dengan AuthWrapper()
     );
   }
 }

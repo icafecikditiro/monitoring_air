@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'home_screen.dart'; // Pastikan path ini benar
+import 'package:testing/auth_wrapper.dart';
+
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -49,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     // Pastikan navigasi hanya terjadi sekali dan widget masih mounted
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (BuildContext context) => HomeScreen()),
+        MaterialPageRoute(builder: (BuildContext context) => AuthWrapper()),
       );
     }
   }

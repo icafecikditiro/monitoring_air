@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -56,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
             // Panggil fungsi login saat tombol ditekan
             signInWithGoogle();
           },
-          icon: Image.asset('assets/google_logo.png', height: 24.0), // Pastikan Anda punya logo ini di folder assets
+          icon: const FaIcon(FontAwesomeIcons.google, size: 20.0), // Icon Google
           label: const Text('Sign in with Google'),
           style: ElevatedButton.styleFrom(
             foregroundColor: Colors.black, backgroundColor: Colors.white,

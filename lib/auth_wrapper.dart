@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'home_page.dart';
+import 'package:testing/home_screen.dart';
+import 'home_screen.dart';
 import 'login_page.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -13,7 +14,7 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         // Jika user sudah login, tampilkan HomePage
         if (snapshot.hasData) {
-          return const HomePage();
+          return const HomeScreen();
         }
         // Jika tidak, tampilkan LoginPage
         else {
