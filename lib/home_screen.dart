@@ -1,16 +1,17 @@
-import 'dart:async';
-import 'dart:convert';
+// File: lib/main_screen.dart
+// Halaman ini menjadi kerangka utama aplikasi yang memiliki AppBar dan BottomNavBar.
+
 import 'package:flutter/material.dart';
-// Import package Firebase
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login_page.dart'; // Pastikan path ini benar
 
-//==================================================================
-// Halaman Utama yang Mengelola Navigasi
-//==================================================================
+// Impor halaman-halaman yang akan ditampilkan
+import 'dashboard_page.dart';
+import 'history_page.dart';
+// import 'profile_page.dart';
+
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -22,15 +23,17 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   final User? _currentUser = FirebaseAuth.instance.currentUser;
 
+  // Daftar halaman untuk BottomNavigationBar.
   final List<Widget> _pages = <Widget>[
     DashboardPage(),
     HistoryPage(),
-    ProfilePage(),
+    // ProfilePage(),
   ];
 
+  // Daftar judul untuk setiap halaman
   static const List<String> _pageTitles = <String>[
     'Dashboard NilaFlow',
-    'Riwayat Data',
+    'Analisis Riwayat', // Judul diubah agar lebih sesuai
     'Profil Pengguna',
   ];
 
@@ -66,7 +69,7 @@ class _MainScreenState extends State<MainScreen> {
         );
       }
     } catch (e) {
-      // Handle error
+      // Handle error jika perlu
     }
   }
 
@@ -74,7 +77,10 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_pageTitles[_selectedIndex], style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          _pageTitles[_selectedIndex],
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -90,7 +96,9 @@ class _MainScreenState extends State<MainScreen> {
             padding: const EdgeInsets.only(right: 12.0),
             child: PopupMenuButton<String>(
               onSelected: (value) {
-                if (value == 'logout') _logout();
+                if (value == 'logout') {
+                  _logout();
+                }
               },
               offset: const Offset(0, 50),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -111,7 +119,10 @@ class _MainScreenState extends State<MainScreen> {
                 backgroundColor: Colors.white24,
                 backgroundImage: _currentUser?.photoURL != null ? NetworkImage(_currentUser!.photoURL!) : null,
                 child: _currentUser?.photoURL == null
-                    ? Text(_currentUser?.displayName?.substring(0, 1).toUpperCase() ?? 'U', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
+                    ? Text(
+                  _currentUser?.displayName?.substring(0, 1).toUpperCase() ?? 'U',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                )
                     : null,
               ),
             ),
@@ -125,7 +136,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Riwayat'),
+          BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics), label: 'Analisis'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profil'),
         ],
         currentIndex: _selectedIndex,
@@ -133,147 +144,5 @@ class _MainScreenState extends State<MainScreen> {
         onTap: _onItemTapped,
       ),
     );
-  }
-}
-
-//==================================================================
-// Halaman Dashboard (Menggunakan Firebase)
-//==================================================================
-class DashboardPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // Alamat data real-time di Firestore
-    final DocumentReference statusRef = FirebaseFirestore.instance.collection('realtime_status').doc('kolam_utama');
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
-        ),
-      ),
-      child: Center(
-        child: StreamBuilder<DocumentSnapshot>(
-          stream: statusRef.snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildStatusIndicator("Menghubungkan...", Icons.wifi_tethering);
-            }
-            if (snapshot.hasError) {
-              return _buildStatusIndicator("Koneksi Gagal", Icons.error_outline, isError: true);
-            }
-            if (!snapshot.hasData || !snapshot.data!.exists) {
-              return _buildStatusIndicator("Menunggu data sensor...", Icons.hourglass_empty);
-            }
-
-            try {
-              final SensorData data = SensorData.fromFirestore(snapshot.data!);
-              return _buildDataDisplay(data);
-            } catch (e) {
-              return _buildStatusIndicator("Data tidak valid", Icons.error_outline, isError: true);
-            }
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDataDisplay(SensorData data) {
-    // ... (UI untuk menampilkan data, tidak ada perubahan di sini)
-    return SingleChildScrollView(/* ... */);
-  }
-
-  Widget _buildStatusIndicator(String text, IconData icon, {bool isError = false}) {
-    // ... (UI untuk status, tidak ada perubahan di sini)
-    return Center(/* ... */);
-  }
-}
-
-//==================================================================
-// Halaman Riwayat (Menggunakan Firebase)
-//==================================================================
-class HistoryPage extends StatefulWidget {
-  @override
-  _HistoryPageState createState() => _HistoryPageState();
-}
-
-class _HistoryPageState extends State<HistoryPage> {
-  // Query untuk mengambil 50 data riwayat terakhir
-  final Query historyQuery = FirebaseFirestore.instance
-      .collection('history_data')
-      .orderBy('timestamp', descending: true)
-      .limit(50);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: StreamBuilder<QuerySnapshot>(
-        stream: historyQuery.snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text("Tidak ada data riwayat."));
-          }
-
-          return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              var doc = snapshot.data!.docs[index];
-              SensorData item = SensorData.fromFirestore(doc);
-              return _buildHistoryTile(item);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildHistoryTile(SensorData data) {
-    // ... (UI untuk tile riwayat, tidak ada perubahan di sini)
-    return Card(/* ... */);
-  }
-}
-
-//==================================================================
-// Halaman Profil (Placeholder)
-//==================================================================
-class ProfilePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text('Halaman Profil Pengguna')),
-    );
-  }
-}
-
-//==================================================================
-// Model Data & Enum
-//==================================================================
-enum WaterStatus { jernih, sedang, keruh }
-class SensorData {
-  final double turbidity;
-  final DateTime timestamp;
-
-  SensorData({required this.turbidity, required this.timestamp});
-
-  // Factory constructor baru untuk membaca dari Firestore
-  factory SensorData.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    return SensorData(
-      turbidity: (data['turbidity'] as num?)?.toDouble() ?? 0.0,
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    );
-  }
-
-  WaterStatus get status {
-    if (turbidity < 150) return WaterStatus.jernih;
-    if (turbidity <= 250) return WaterStatus.sedang;
-    return WaterStatus.keruh;
   }
 }
