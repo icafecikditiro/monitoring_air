@@ -14,7 +14,7 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         // Jika user sudah login, tampilkan HomePage
         if (snapshot.hasData) {
-          return const HomeScreen();
+          return MainScreen();
         }
         // Jika tidak, tampilkan LoginPage
         else {
