@@ -1,6 +1,4 @@
 // File: lib/history_page.dart
-// Halaman ini berisi logika untuk filter dan menampilkan rata-rata riwayat data.
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'models/sensor_data_model.dart'; // Impor model data Anda
@@ -8,6 +6,9 @@ import 'models/sensor_data_model.dart'; // Impor model data Anda
 enum HistoryFilter { h1, h6, h24, d7, d30 }
 
 class HistoryPage extends StatefulWidget {
+  final String userId;
+  const HistoryPage({super.key, required this.userId});
+
   @override
   _HistoryPageState createState() => _HistoryPageState();
 }
@@ -45,7 +46,10 @@ class _HistoryPageState extends State<HistoryPage> {
     }
 
     setState(() {
+      // Query sekarang merujuk ke sub-collection di bawah UID pengguna.
       _historyStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
           .collection('history_data')
           .where('timestamp', isGreaterThanOrEqualTo: startTime)
           .orderBy('timestamp', descending: true)
@@ -58,9 +62,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return Scaffold(
       body: Column(
         children: [
-          // Bar untuk memilih filter
           _buildFilterChips(),
-          // Daftar riwayat
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _historyStream,
@@ -74,19 +76,14 @@ class _HistoryPageState extends State<HistoryPage> {
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Center(child: Text("Tidak ada data untuk rentang waktu ini."));
                 }
-
                 final List<SensorData> historyList = snapshot.data!.docs.map((doc) => SensorData.fromFirestore(doc)).toList();
-
                 return Column(
                   children: [
-                    // Kartu untuk menampilkan rata-rata
                     _buildAverageCard(historyList),
-                    // Garis pemisah
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: Divider(color: Colors.grey[300]),
                     ),
-                    // Daftar riwayat
                     Expanded(
                       child: ListView.builder(
                         padding: EdgeInsets.only(top: 0),

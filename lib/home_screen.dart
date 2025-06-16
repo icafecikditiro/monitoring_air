@@ -11,7 +11,6 @@ import 'dashboard_page.dart';
 import 'history_page.dart';
 // import 'profile_page.dart';
 
-
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -23,17 +22,25 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   final User? _currentUser = FirebaseAuth.instance.currentUser;
 
-  // Daftar halaman untuk BottomNavigationBar.
-  final List<Widget> _pages = <Widget>[
-    DashboardPage(),
-    HistoryPage(),
-    // ProfilePage(),
-  ];
+  late final List<Widget> _pages;
 
-  // Daftar judul untuk setiap halaman
+  @override
+  void initState() {
+    super.initState();
+    // Ambil UID pengguna. Jika tidak ada, gunakan string error (sebagai fallback).
+    final String userId = _currentUser?.uid ?? 'error_no_user_id';
+
+    // Inisialisasi daftar halaman dan teruskan userId ke halaman yang memerlukan.
+    _pages = <Widget>[
+      DashboardPage(userId: userId),
+      HistoryPage(userId: userId),
+      // ProfilePage(), // ProfilePage tidak perlu userId untuk saat ini
+    ];
+  }
+
   static const List<String> _pageTitles = <String>[
     'Dashboard NilaFlow',
-    'Analisis Riwayat', // Judul diubah agar lebih sesuai
+    'Analisis Riwayat',
     'Profil Pengguna',
   ];
 
@@ -69,7 +76,7 @@ class _MainScreenState extends State<MainScreen> {
         );
       }
     } catch (e) {
-      // Handle error jika perlu
+      // Handle error
     }
   }
 
@@ -77,10 +84,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _pageTitles[_selectedIndex],
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(_pageTitles[_selectedIndex], style: TextStyle(fontWeight: FontWeight.bold)),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -96,9 +100,7 @@ class _MainScreenState extends State<MainScreen> {
             padding: const EdgeInsets.only(right: 12.0),
             child: PopupMenuButton<String>(
               onSelected: (value) {
-                if (value == 'logout') {
-                  _logout();
-                }
+                if (value == 'logout') _logout();
               },
               offset: const Offset(0, 50),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -119,10 +121,7 @@ class _MainScreenState extends State<MainScreen> {
                 backgroundColor: Colors.white24,
                 backgroundImage: _currentUser?.photoURL != null ? NetworkImage(_currentUser!.photoURL!) : null,
                 child: _currentUser?.photoURL == null
-                    ? Text(
-                  _currentUser?.displayName?.substring(0, 1).toUpperCase() ?? 'U',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                )
+                    ? Text(_currentUser?.displayName?.substring(0, 1).toUpperCase() ?? 'U', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
                     : null,
               ),
             ),
