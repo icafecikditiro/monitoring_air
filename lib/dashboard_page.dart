@@ -1,7 +1,7 @@
 // File: lib/dashboard_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'models/sensor_data_model.dart'; // Impor model data Anda
+import 'models/sensor_data_model.dart'; // Pastikan path ini benar
 
 class DashboardPage extends StatelessWidget {
   final String userId;
@@ -9,12 +9,16 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Path sekarang merujuk ke sub-collection di bawah UID pengguna.
-    final DocumentReference statusRef = FirebaseFirestore.instance
+    // --- PERUBAHAN UTAMA: Membuat Query ke koleksi history_data ---
+    // 1. Arahkan ke koleksi 'history_data'.
+    // 2. Urutkan berdasarkan 'timestamp' dari yang terbaru (descending).
+    // 3. Batasi hasilnya hanya 1 dokumen teratas.
+    final Query historyQuery = FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
-        .collection('realtime_status')
-        .doc('kolam_utama');
+        .collection('history_data') // <--- NAMA KOLEKSI BARU
+        .orderBy('timestamp', descending: true) // <--- PENTING: Mengambil yang terbaru
+        .limit(1); // <--- PENTING: Hanya satu data
 
     return Container(
       decoration: BoxDecoration(
@@ -25,23 +29,31 @@ class DashboardPage extends StatelessWidget {
         ),
       ),
       child: Center(
-        child: StreamBuilder<DocumentSnapshot>(
-          stream: statusRef.snapshots(),
+        // --- PERUBAHAN: StreamBuilder sekarang menggunakan QuerySnapshot ---
+        child: StreamBuilder<QuerySnapshot>(
+          stream: historyQuery.snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return _buildStatusIndicator("Menghubungkan...", Icons.wifi_tethering);
             }
             if (snapshot.hasError) {
+              // Menambahkan log error untuk debugging yang lebih mudah
+              print("Firestore Error: ${snapshot.error}");
               return _buildStatusIndicator("Koneksi Gagal", Icons.error_outline, isError: true);
             }
-            if (!snapshot.hasData || !snapshot.data!.exists) {
+            // --- PERUBAHAN: Cek apakah query mengembalikan dokumen ---
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return _buildStatusIndicator("Menunggu data sensor...", Icons.hourglass_empty);
             }
 
             try {
-              final SensorData data = SensorData.fromFirestore(snapshot.data!);
+              // Ambil dokumen pertama dari daftar hasil query
+              final DocumentSnapshot latestDataDoc = snapshot.data!.docs.first;
+              final SensorData data = SensorData.fromFirestore(latestDataDoc);
               return _buildDataDisplay(data);
             } catch (e) {
+              // Menambahkan log error untuk debugging
+              print("Data Parsing Error: $e");
               return _buildStatusIndicator("Data tidak valid", Icons.error_outline, isError: true);
             }
           },
@@ -50,7 +62,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // Widget untuk menampilkan data utama
+  // Widget untuk menampilkan data utama (TIDAK ADA PERUBAHAN DI SINI)
   Widget _buildDataDisplay(SensorData data) {
     Color statusColor;
     IconData statusIcon;
@@ -116,7 +128,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // Widget helper untuk status
+  // Widget helper untuk status (TIDAK ADA PERUBAHAN DI SINI)
   Widget _buildStatusIndicator(String text, IconData icon, {bool isError = false}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
